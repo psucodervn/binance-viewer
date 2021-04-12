@@ -62,7 +62,7 @@ func cmdPNL(b *Bot) interface{} {
 		}
 
 		from, _ := goment.New()
-		from.Subtract(diff, "day").StartOf("day").SetHour(7)
+		from.UTC().Subtract(diff, "day").StartOf("day")
 		to, _ := goment.New(from)
 		to = to.Add(1, "day").Subtract(1, "second")
 		log.Debug().Str("from", from.ToString()).Str("to", to.ToString()).Send()
@@ -92,6 +92,7 @@ func cmdInfo(b *Bot) interface{} {
 		defer cc()
 
 		var bf bytes.Buffer
+		totalUnP, totalAvB, totalMgB, totalWaB := 0.0, 0.0, 0.0, 0.0
 		for _, a := range u.Accounts {
 			cli := user.GetUserClient(a)
 			acc, err := cli.Info(ctx)
@@ -100,12 +101,28 @@ func cmdInfo(b *Bot) interface{} {
 				continue
 			}
 			bf.WriteString(fmt.Sprintf("[+] %s:", a.Name))
-			bf.WriteString(fmt.Sprintf(" UnP: %.02f", util.ParseFloat(acc.TotalUnrealizedProfit)))
-			bf.WriteString(fmt.Sprintf(" | AvB: %.02f", util.ParseFloat(acc.MaxWithdrawAmount)))
-			bf.WriteString(fmt.Sprintf(" | MgB: %.02f", util.ParseFloat(acc.TotalMarginBalance)))
-			bf.WriteString(fmt.Sprintf(" | WaB: %.02f", util.ParseFloat(acc.TotalWalletBalance)))
+			unp := util.ParseFloat(acc.TotalUnrealizedProfit)
+			totalUnP += unp
+			bf.WriteString(fmt.Sprintf(" UnP: %.02f", unp))
+			avb := util.ParseFloat(acc.MaxWithdrawAmount)
+			totalAvB += avb
+			bf.WriteString(fmt.Sprintf(" | AvB: %.02f", avb))
+			mgb := util.ParseFloat(acc.TotalMarginBalance)
+			totalMgB += mgb
+			bf.WriteString(fmt.Sprintf(" | MgB: %.02f", mgb))
+			wab := util.ParseFloat(acc.TotalWalletBalance)
+			totalWaB += wab
+			bf.WriteString(fmt.Sprintf(" | WaB: %.02f", wab))
 			bf.WriteString("\n")
 		}
+
+		// total
+		bf.WriteString(fmt.Sprintf("Total:"))
+		bf.WriteString(fmt.Sprintf(" UnP: %.02f", totalUnP))
+		bf.WriteString(fmt.Sprintf(" | AvB: %.02f", totalAvB))
+		bf.WriteString(fmt.Sprintf(" | MgB: %.02f", totalMgB))
+		bf.WriteString(fmt.Sprintf(" | WaB: %.02f", totalWaB))
+		bf.WriteString("\n")
 		_, _ = b.bot.Send(m.Chat, bf.String())
 	}
 }
