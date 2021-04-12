@@ -2,63 +2,24 @@
 package config
 
 import (
+	"github.com/kelseyhightower/envconfig"
 	"github.com/rs/zerolog/log"
 )
 
-// ReadAPIConfig reads APIConfig from env
-func ReadAPIConfig(prefix ...string) (APIConfig, error) {
+// ReadBotConfig reads BotConfig from env
+func ReadBotConfig(prefix ...string) (BotConfig, error) {
 	p := ""
 	if len(prefix) > 0 {
 		p = prefix[0]
 	}
-	var cfg APIConfig
+	var cfg BotConfig
 	err := envconfig.Process(p, &cfg)
 	return cfg, err
 }
 
-// MustReadAPIConfig reads APIConfig from env, panic if error
-func MustReadAPIConfig(prefix ...string) APIConfig {
-	cfg, err := ReadAPIConfig(prefix...)
-	if err != nil {
-		log.Fatal().Err(err).Send()
-	}
-	return cfg
-}
-
-// ReadPostgresConfig reads PostgresConfig from env
-func ReadPostgresConfig(prefix ...string) (PostgresConfig, error) {
-	p := ""
-	if len(prefix) > 0 {
-		p = prefix[0]
-	}
-	var cfg PostgresConfig
-	err := envconfig.Process(p, &cfg)
-	return cfg, err
-}
-
-// MustReadPostgresConfig reads PostgresConfig from env, panic if error
-func MustReadPostgresConfig(prefix ...string) PostgresConfig {
-	cfg, err := ReadPostgresConfig(prefix...)
-	if err != nil {
-		log.Fatal().Err(err).Send()
-	}
-	return cfg
-}
-
-// ReadMigrationConfig reads MigrationConfig from env
-func ReadMigrationConfig(prefix ...string) (MigrationConfig, error) {
-	p := ""
-	if len(prefix) > 0 {
-		p = prefix[0]
-	}
-	var cfg MigrationConfig
-	err := envconfig.Process(p, &cfg)
-	return cfg, err
-}
-
-// MustReadMigrationConfig reads MigrationConfig from env, panic if error
-func MustReadMigrationConfig(prefix ...string) MigrationConfig {
-	cfg, err := ReadMigrationConfig(prefix...)
+// MustReadBotConfig reads BotConfig from env, panic if error
+func MustReadBotConfig(prefix ...string) BotConfig {
+	cfg, err := ReadBotConfig(prefix...)
 	if err != nil {
 		log.Fatal().Err(err).Send()
 	}
