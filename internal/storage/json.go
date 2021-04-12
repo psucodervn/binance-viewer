@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	DefaultFilePath = "data.json"
+	DefaultFilePath = "data/data.json"
 )
 
 func LoadOrCreate(db interface{}) error {

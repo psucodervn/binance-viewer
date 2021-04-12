@@ -2,4 +2,4 @@
 .git
 .idea
 .env
-data.json
+data/data.json

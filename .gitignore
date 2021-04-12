@@ -473,4 +473,5 @@ fabric.properties
 
 # Custom
 .env
-data.json
+data/data.json
+copytrader
