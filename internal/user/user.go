@@ -9,18 +9,18 @@ import (
 	"copytrader/internal/util"
 )
 
-func GetUserClients(u model.User) []*binance.UserClient {
-	clients := make([]*binance.UserClient, len(u.Accounts))
+func GetUserClients(u model.User) []*binance.AccountClient {
+	clients := make([]*binance.AccountClient, len(u.Accounts))
 	i := 0
 	for _, acc := range u.Accounts {
-		clients[i] = binance.NewUserClient(acc.ApiKey, acc.SecretKey)
+		clients[i] = binance.NewAccountClient(acc.ApiKey, acc.SecretKey)
 		i++
 	}
 	return clients
 }
 
-func GetUserClient(acc model.Account) *binance.UserClient {
-	return binance.NewUserClient(acc.ApiKey, acc.SecretKey)
+func GetUserClient(acc model.Account) *binance.AccountClient {
+	return binance.NewAccountClient(acc.ApiKey, acc.SecretKey)
 }
 
 func TotalUserIncome(incomes []*futures.IncomeHistory) float64 {

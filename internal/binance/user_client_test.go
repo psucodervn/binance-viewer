@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newUserClientFromEnv() *UserClient {
-	return NewUserClient(os.Getenv("TEST_API_KEY"), os.Getenv("TEST_SECRET_KEY"))
+func newUserClientFromEnv() *AccountClient {
+	return NewAccountClient(os.Getenv("TEST_API_KEY"), os.Getenv("TEST_SECRET_KEY"))
 }
 
 func TestUserClient_Info(t *testing.T) {
@@ -28,7 +28,7 @@ func TestUserClient_Info(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := NewUserClient(tt.fields.ApiKey, tt.fields.SecretKey)
+			c := NewAccountClient(tt.fields.ApiKey, tt.fields.SecretKey)
 			ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancelFunc()
 			gotAcc, err := c.Info(ctx)

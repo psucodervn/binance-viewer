@@ -6,9 +6,10 @@ import (
 
 var (
 	commands = []telebot.Command{
-		{Text: "info", Description: "View accounts info"},
+		{Text: "i", Description: "View accounts info"},
+		{Text: "ii", Description: "View accounts info in table format"},
 		{Text: "pnl", Description: "Calculate today's PNL"},
-		{Text: "add", Description: "Add api key: /add api_key secret_key"},
+		{Text: "add", Description: "Add api key: /add name api_key secret_key"},
 		{Text: "start", Description: "Start bot"},
 	}
 )
