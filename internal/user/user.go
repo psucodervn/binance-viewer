@@ -28,9 +28,11 @@ func TotalUserIncome(incomes []*futures.IncomeHistory) float64 {
 	for _, tr := range incomes {
 		v := util.ParseFloat(tr.Income)
 		switch tr.IncomeType {
+		case binance.TypeTransfer:
+			// ignore transfer
+			continue
 		case binance.TypeRealizedPNL:
 		case binance.TypeCommission:
-		case binance.TypeTransfer:
 		case binance.TypeCommissionRebate:
 		case binance.TypeFundingFee:
 		case binance.TypeReferralKickback:

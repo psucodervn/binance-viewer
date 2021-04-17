@@ -1,42 +1,69 @@
 package model
 
 import (
+	"encoding/json"
 	"sync"
 )
 
 type Database struct {
-	Users map[UserID]User `json:"users"`
+	users map[UserID]User
 	mu    sync.RWMutex
+}
+
+type tmpJson struct {
+	Users map[UserID]User `json:"users"`
+}
+
+func (d *Database) UnmarshalJSON(bytes []byte) error {
+	var tmp tmpJson
+	if err := json.Unmarshal(bytes, &tmp); err != nil {
+		return err
+	}
+	d.mu.Lock()
+	d.users = tmp.Users
+	d.mu.Unlock()
+	return nil
+}
+
+func (d *Database) MarshalJSON() ([]byte, error) {
+	tmp := tmpJson{Users: d.Users()}
+	return json.Marshal(tmp)
+}
+
+func (d *Database) Users() map[UserID]User {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.users
 }
 
 func NewDatabase() *Database {
 	return &Database{
-		Users: map[UserID]User{},
+		users: map[UserID]User{},
 	}
 }
 
 func (d *Database) Renew() {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	d.Users = nil
+	d.users = nil
 }
 
 func (d *Database) AddUser(user User) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	if _, ok := d.Users[user.TelegramID]; ok {
+	if _, ok := d.users[user.TelegramID]; ok {
 		return nil
 	}
-	d.Users[user.TelegramID] = user
+	d.users[user.TelegramID] = user
 	return nil
 }
 
 func (d *Database) FindUser(id int64) (User, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	for i := range d.Users {
-		if d.Users[i].TelegramID == id {
-			u := d.Users[i]
+	for i := range d.users {
+		if d.users[i].TelegramID == id {
+			u := d.users[i]
 			return u, nil
 		}
 	}
@@ -46,12 +73,12 @@ func (d *Database) FindUser(id int64) (User, error) {
 func (d *Database) AddAccount(u User, acc Account) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	if _, ok := d.Users[u.TelegramID]; !ok {
+	if _, ok := d.users[u.TelegramID]; !ok {
 		return ErrNotFound
 	}
-	if _, ok := d.Users[u.TelegramID].Accounts[acc.ApiKey]; ok {
+	if _, ok := d.users[u.TelegramID].Accounts[acc.ApiKey]; ok {
 		return nil
 	}
-	d.Users[u.TelegramID].Accounts[acc.ApiKey] = acc
+	d.users[u.TelegramID].Accounts[acc.ApiKey] = acc
 	return nil
 }

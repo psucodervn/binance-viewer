@@ -474,4 +474,5 @@ fabric.properties
 # Custom
 .env
 data/data.json
+data/data.testnet.json
 copytrader

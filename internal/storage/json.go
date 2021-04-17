@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-const (
+var (
 	DefaultFilePath = "data/data.json"
 )
 

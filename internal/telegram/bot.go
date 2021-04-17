@@ -143,7 +143,7 @@ func cmdInfoW(b *Bot) interface{} {
 		to = to.Add(1, "day").Subtract(1, "second")
 
 		w := tabwriter.NewWriter(&bf, 0, 0, 1, ' ', tabwriter.AlignRight|tabwriter.Debug)
-		fmt.Fprintln(w, "Name \tP \tUnP \tAvB \tWaB \tMgB \t")
+		fmt.Fprintln(w, "Name \tPnL \tUnP \tAvB \tWaB \tMgB \t")
 		fmt.Fprintln(w, "------ \t----- \t----- \t----- \t----- \t----- \t")
 		for _, a := range u.Accounts {
 			cli := user.GetUserClient(a)

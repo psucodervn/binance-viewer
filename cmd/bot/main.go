@@ -5,12 +5,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/adshao/go-binance/v2/futures"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"copytrader/internal/binance"
 	"copytrader/internal/config"
 	"copytrader/internal/model"
+	"copytrader/internal/runner"
 	"copytrader/internal/storage"
 	"copytrader/internal/telegram"
 )
@@ -26,29 +27,39 @@ func Command() *cobra.Command {
 
 func run(cmd *cobra.Command, args []string) {
 	cfg := config.MustReadBotConfig()
+	if cfg.UseTestnet {
+		futures.UseTestnet = true
+		storage.DefaultFilePath = "data/data.testnet.json"
+	}
+
 	db := model.NewDatabase()
 	if err := storage.LoadOrCreate(db); err != nil {
 		log.Fatal().Err(err).Send()
 	}
 
+	m := runner.NewManager(db)
+	m.Start()
+
 	bot := telegram.NewBot(cfg.BotToken, db)
-	if err := bot.Start(); err != nil {
-		log.Fatal().Err(err).Send()
-	}
+	go func() {
+		if err := bot.Start(); err != nil {
+			log.Fatal().Err(err).Send()
+		}
+	}()
 
 	ctx := context.Background()
 	ctx, cc := signal.NotifyContext(ctx, syscall.SIGKILL, syscall.SIGINT)
-	cli := binance.NewIdolFollower()
-	// _ = cli.Follow(ctx, model.IdolFmzcomAutoTrade)
-	_ = cli.Follow(ctx, model.IdolCryptoNifeCatch)
-	_ = cli.Follow(ctx, model.IdolHuyLD)
-	_ = cli.Follow(ctx, model.IdolHungLM)
-	_ = cli.Follow(ctx, model.IdolPDYK)
-	_ = cli.Follow(ctx, model.IdolHalfTalkVery)
-	_ = cli.Follow(ctx, model.IdolCountyYearBy)
-	_ = cli.Follow(ctx, model.IdolDegenerator)
-	_ = cli.Follow(ctx, model.IdolGrugLikesRock)
-	cli.Start(ctx)
+	// cli := binance.NewIdolFollower()
+	// // _ = cli.Follow(ctx, model.IdolFmzcomAutoTrade)
+	// _ = cli.Follow(ctx, model.IdolCryptoNifeCatch)
+	// _ = cli.Follow(ctx, model.IdolHuyLD)
+	// _ = cli.Follow(ctx, model.IdolHungLM)
+	// _ = cli.Follow(ctx, model.IdolPDYK)
+	// _ = cli.Follow(ctx, model.IdolHalfTalkVery)
+	// _ = cli.Follow(ctx, model.IdolCountyYearBy)
+	// _ = cli.Follow(ctx, model.IdolDegenerator)
+	// _ = cli.Follow(ctx, model.IdolGrugLikesRock)
+	// cli.Start(ctx)
 	<-ctx.Done()
 	cc()
 }
