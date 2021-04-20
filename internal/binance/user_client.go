@@ -39,9 +39,32 @@ func (c *AccountClient) HistoryTrades(ctx context.Context) (trades []*futures.Tr
 }
 
 func (c *AccountClient) ListIncome(ctx context.Context, from, to time.Time) (incomes []*futures.IncomeHistory, err error) {
-	trades, err := c.cli.NewGetIncomeHistoryService().StartTime(from.UnixNano() / 1_000_000).EndTime(to.UnixNano() / 1_000_000).Limit(1000).Do(ctx)
-	if err != nil {
-		return nil, err
+	const Limit = 1000
+	var (
+		start  = from.UnixNano() / 1_000_000
+		end    = to.UnixNano() / 1_000_000
+		lastID = int64(0)
+	)
+	for {
+		ctx, cc := context.WithTimeout(context.Background(), 5*time.Second)
+		trades, err := c.cli.NewGetIncomeHistoryService().StartTime(start).EndTime(end).Limit(Limit).Do(ctx)
+		cc()
+		if err != nil {
+			return incomes, err
+		}
+		if len(trades) == 0 {
+			break
+		}
+		i := 0
+		for i < len(trades) && trades[i].TranID == lastID {
+			i++
+		}
+		incomes = append(incomes, trades[i:]...)
+		if len(trades) < Limit {
+			break
+		}
+		lastID = trades[len(trades)-1].TranID
+		start = trades[len(trades)-1].Time
 	}
-	return trades, nil
+	return incomes, nil
 }
