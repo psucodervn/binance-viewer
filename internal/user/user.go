@@ -52,7 +52,7 @@ func TotalPosition(positions []*futures.AccountPosition) int {
 	cnt := 0
 	for _, p := range positions {
 		amt, _ := strconv.ParseFloat(p.PositionAmt, 64)
-		if amt > 0 {
+		if !util.IsZero(amt) {
 			cnt += 1
 		}
 	}
