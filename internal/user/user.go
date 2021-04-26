@@ -1,6 +1,8 @@
 package user
 
 import (
+	"strconv"
+
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/rs/zerolog/log"
 
@@ -44,4 +46,15 @@ func TotalUserIncome(incomes []*futures.IncomeHistory) float64 {
 		res += v
 	}
 	return res
+}
+
+func TotalPosition(positions []*futures.AccountPosition) int {
+	cnt := 0
+	for _, p := range positions {
+		amt, _ := strconv.ParseFloat(p.PositionAmt, 64)
+		if amt > 0 {
+			cnt += 1
+		}
+	}
+	return cnt
 }

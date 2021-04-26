@@ -178,7 +178,7 @@ func handleInfoW(b *Bot, m *telebot.Message) {
 		unp := util.ParseFloat(acc.TotalUnrealizedProfit)
 		totalUnP += unp
 		fmt.Fprintf(w, "%.02f \t", pnl)
-		fmt.Fprintf(w, "%.02f \t", unp)
+		fmt.Fprintf(w, "%.02f (%d)\t", unp, user.TotalPosition(acc.Positions))
 		avb := util.ParseFloat(acc.MaxWithdrawAmount)
 		totalAvB += avb
 		fmt.Fprintf(w, "%.02f \t", avb)
