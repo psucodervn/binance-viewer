@@ -87,11 +87,20 @@ func cmdAddKey(b *Bot) interface{} {
 
 // loadUser load or create a new user
 func (b *Bot) loadUser(msg *telebot.Message) model.User {
-	u, err := b.db.FindUser(int64(msg.Sender.ID))
+	uid := int64(msg.Sender.ID)
+	if msg.Sender.IsBot {
+		uid = msg.Chat.ID
+	}
+	u, err := b.db.FindUser(uid)
 	if err == nil {
 		return u
 	}
-	u = model.NewUser(getName(msg.Sender), int64(msg.Sender.ID), nil)
+
+	name := getSenderName(msg.Sender)
+	if msg.Sender.IsBot {
+		name = getChatName(msg.Chat)
+	}
+	u = model.NewUser(name, uid, nil)
 	_ = b.db.AddUser(u)
 	_ = storage.Save(b.db)
 	return u

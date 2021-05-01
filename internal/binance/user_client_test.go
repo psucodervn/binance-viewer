@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"copytrader/internal/util"
 )
 
 func newUserClientFromEnv() *AccountClient {
@@ -78,4 +80,19 @@ func TestUserClient_ListIncome(t *testing.T) {
 		return
 	}
 	require.NotNil(t, t, gotTrades)
+}
+
+func TestUserClient_ListPositions(t *testing.T) {
+	c := newUserClientFromEnv()
+	ctx, cc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cc()
+
+	acc, err := c.Info(ctx)
+	require.NoError(t, err)
+
+	for _, p := range acc.Positions {
+		if util.ParseFloat(p.PositionAmt) != 0 {
+			t.Logf("%#v", p)
+		}
+	}
 }

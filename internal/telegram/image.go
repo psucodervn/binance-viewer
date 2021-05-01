@@ -104,7 +104,7 @@ func cmdImageCard(b *Bot) interface{} {
 			log.Err(err).Msg("encode image failed")
 			return
 		}
-		log.Debug().Dur("elapsed", time.Now().Sub(start)).Send()
+		log.Debug().Str("user", u.Name).Dur("elapsed", time.Now().Sub(start)).Send()
 
 		if _, err := b.bot.Send(m.Chat, &telebot.Photo{File: telebot.FromReader(&bf)}); err != nil {
 			log.Err(err).Msg("send image failed")
