@@ -18,6 +18,7 @@
     <filePath value="$PROJECT_DIR$/main.go" />
     <package value="copytrader" />
     <directory value="$PROJECT_DIR$" />
+    <output_directory value="$PROJECT_DIR$" />
     <method v="2" />
   </configuration>
 </component>

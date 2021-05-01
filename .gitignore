@@ -476,3 +476,5 @@ fabric.properties
 data/data.json
 data/data.testnet.json
 copytrader
+bot
+tmp

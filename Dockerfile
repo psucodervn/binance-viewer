@@ -9,6 +9,7 @@ FROM scratch
 ARG BINARY
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY assets ./assets
 COPY $BINARY ./app
 
 ENTRYPOINT ["./app"]
