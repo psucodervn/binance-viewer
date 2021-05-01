@@ -29,6 +29,7 @@ var (
 	ColorBinance      = color.RGBA{R: 240, G: 185, B: 11, A: 255}
 	Background, _     = gg.LoadJPG("assets/bg.jpg")
 	BackgroundPattern = gg.NewSurfacePattern(Background, gg.RepeatY)
+	LocalLocation, _  = time.LoadLocation("Asia/Ho_Chi_Minh")
 )
 
 func profitColor(v float64) color.Color {
@@ -92,7 +93,7 @@ func cmdImageCard(b *Bot) interface{} {
 
 		dc.SetFontFace(FontFaceItalic)
 		dc.SetColor(colornames.Gray)
-		dc.DrawString(fmt.Sprintf("(*) updated at %s", time.Now().Format("15:04:05, 02/01/2006 GMT MST")), 40, float64(dc.Height())-40)
+		dc.DrawString(fmt.Sprintf("(*) updated at %s", time.Now().In(LocalLocation).Format("02/01/2006, 15:04:05 GMT MST")), 40, float64(dc.Height())-40)
 
 		var bf bytes.Buffer
 		if err := png.Encode(&bf, dc.Image()); err != nil {
