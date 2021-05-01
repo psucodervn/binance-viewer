@@ -42,7 +42,7 @@ func profitColor(v float64) color.Color {
 func cmdImageCard(b *Bot) interface{} {
 	return func(m *telebot.Message) {
 		start := time.Now()
-		u := b.loadUser(m.Chat)
+		u := b.loadUser(m)
 		ctx, cc := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cc()
 
@@ -54,6 +54,10 @@ func cmdImageCard(b *Bot) interface{} {
 		accounts, err := prepareAccounts(ctx, u, from, to)
 		if err != nil {
 			_, _ = b.bot.Send(m.Chat, "Query Binance API failed")
+			return
+		}
+		if len(accounts) == 0 {
+			_, _ = b.bot.Send(m.Chat, "You don't have any accounts")
 			return
 		}
 

@@ -21,7 +21,7 @@ import (
 
 func cmdPNL(b *Bot) interface{} {
 	return func(m *telebot.Message) {
-		u := b.loadUser(m.Chat)
+		u := b.loadUser(m)
 		ctx, cc := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cc()
 
@@ -57,7 +57,7 @@ func cmdPNL(b *Bot) interface{} {
 
 func cmdInfo(b *Bot) interface{} {
 	return func(m *telebot.Message) {
-		u := b.loadUser(m.Chat)
+		u := b.loadUser(m)
 		ctx, cc := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cc()
 
@@ -109,7 +109,7 @@ func btnInfoW(b *Bot) interface{} {
 }
 
 func handleInfoW(b *Bot, m *telebot.Message) {
-	u := b.loadUser(m.Chat)
+	u := b.loadUser(m)
 	ctx, cc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cc()
 

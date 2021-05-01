@@ -69,7 +69,7 @@ func cmdStart(b *Bot) interface{} {
 
 func cmdAddKey(b *Bot) interface{} {
 	return func(m *telebot.Message) {
-		u := b.loadUser(m.Chat)
+		u := b.loadUser(m)
 		args := splitArgs(m.Payload)
 		if len(args) != 3 {
 			_, _ = b.bot.Send(m.Chat, "Invalid command. Usage: /add name api_key secret_key")
@@ -86,12 +86,12 @@ func cmdAddKey(b *Bot) interface{} {
 }
 
 // loadUser load or create a new user
-func (b *Bot) loadUser(chat *telebot.Chat) model.User {
-	u, err := b.db.FindUser(chat.ID)
+func (b *Bot) loadUser(msg *telebot.Message) model.User {
+	u, err := b.db.FindUser(int64(msg.Sender.ID))
 	if err == nil {
 		return u
 	}
-	u = model.NewUser(getName(chat), chat.ID, nil)
+	u = model.NewUser(getName(msg.Sender), int64(msg.Sender.ID), nil)
 	_ = b.db.AddUser(u)
 	_ = storage.Save(b.db)
 	return u
