@@ -37,7 +37,7 @@ func (b *Bot) Start() error {
 	// user commands
 	b.bot.Handle("/start", cmdStart(b))
 	b.bot.Handle("/add", cmdAddKey(b))
-	b.bot.Handle("/i", cmdInfo(b))
+	b.bot.Handle("/info", cmdInfo(b))
 	b.bot.Handle("/ii", cmdInfoW(b))
 	b.bot.Handle("/pnl", cmdPNL(b))
 	b.bot.Handle("/card", cmdImageCard(b))
