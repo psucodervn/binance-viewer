@@ -22,6 +22,7 @@ func NewManager(db *model.Database) *Manager {
 func (m *Manager) Start() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
 	users := m.db.Users()
 	for _, u := range users {
 		for _, acc := range u.Accounts {

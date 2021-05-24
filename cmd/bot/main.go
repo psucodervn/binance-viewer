@@ -2,6 +2,7 @@ package bot
 
 import (
 	"context"
+	"copytrader/internal/binance"
 	"os/signal"
 	"syscall"
 
@@ -40,17 +41,10 @@ func run(cmd *cobra.Command, args []string) {
 	m := runner.NewManager(db)
 	m.Start()
 
-	bot := telegram.NewBot(cfg.BotToken, db)
-	go func() {
-		if err := bot.Start(); err != nil {
-			log.Fatal().Err(err).Send()
-		}
-	}()
-
 	ctx := context.Background()
 	ctx, cc := signal.NotifyContext(ctx, syscall.SIGKILL, syscall.SIGINT)
-	// cli := binance.NewIdolFollower()
-	// // _ = cli.Follow(ctx, model.IdolFmzcomAutoTrade)
+	cli := binance.NewIdolFollower()
+	// _ = cli.Follow(ctx, model.IdolFmzcomAutoTrade)
 	// _ = cli.Follow(ctx, model.IdolCryptoNifeCatch)
 	// _ = cli.Follow(ctx, model.IdolHuyLD)
 	// _ = cli.Follow(ctx, model.IdolHungLM)
@@ -59,7 +53,15 @@ func run(cmd *cobra.Command, args []string) {
 	// _ = cli.Follow(ctx, model.IdolCountyYearBy)
 	// _ = cli.Follow(ctx, model.IdolDegenerator)
 	// _ = cli.Follow(ctx, model.IdolGrugLikesRock)
-	// cli.Start(ctx)
+	cli.Start(ctx)
+
+	bot := telegram.NewBot(cfg.BotToken, db, cli)
+	go func() {
+		if err := bot.Start(); err != nil {
+			log.Fatal().Err(err).Send()
+		}
+	}()
+
 	<-ctx.Done()
 	cc()
 }

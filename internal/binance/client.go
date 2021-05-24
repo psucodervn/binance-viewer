@@ -71,6 +71,10 @@ func (c *IdolFollower) Unfollow(ctx context.Context, idol model.Idol) error {
 	return nil
 }
 
+func (c *IdolFollower) GetMarkPrice(symbol string) float64 {
+	return c.markPrices.Get(symbol)
+}
+
 func (c *IdolFollower) startFollow(ctx context.Context) {
 	for {
 		select {

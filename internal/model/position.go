@@ -9,6 +9,8 @@ import (
 const (
 	SideBuy         = "BUY"
 	SideSell        = "SELL"
+	SideLong        = "LONG"
+	SideShort       = "SHORT"
 	StatusNew       = "NEW"
 	StatusIncreased = "INCREASED"
 	StatusDecreased = "DECREASED"

@@ -1,6 +1,11 @@
 package telegram
 
 import (
+	"bytes"
+	"context"
+	"copytrader/internal/binance"
+	"copytrader/internal/user"
+	"fmt"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -13,9 +18,10 @@ import (
 type Bot struct {
 	bot *telebot.Bot
 	db  *model.Database
+	cli *binance.IdolFollower
 }
 
-func NewBot(token string, db *model.Database) *Bot {
+func NewBot(token string, db *model.Database, cli *binance.IdolFollower) *Bot {
 	bot, err := telebot.NewBot(telebot.Settings{
 		Token:  token,
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
@@ -23,7 +29,7 @@ func NewBot(token string, db *model.Database) *Bot {
 	if err != nil {
 		log.Fatal().Err(err).Send()
 	}
-	return &Bot{bot: bot, db: db}
+	return &Bot{bot: bot, db: db, cli: cli}
 }
 
 func (b *Bot) Start() error {
@@ -38,9 +44,10 @@ func (b *Bot) Start() error {
 	b.bot.Handle("/start", cmdStart(b))
 	b.bot.Handle("/add", cmdAddKey(b))
 	b.bot.Handle("/info", cmdInfo(b))
-	b.bot.Handle("/ii", cmdInfoW(b))
+	b.bot.Handle("/info_table", cmdInfoW(b))
 	b.bot.Handle("/pnl", cmdPNL(b))
 	b.bot.Handle("/card", cmdImageCard(b))
+	b.bot.Handle("/positions", cmdPositions(b))
 
 	// user query
 	b.bot.Handle(&btnRefreshInfoTable, btnInfoW(b))
@@ -104,4 +111,50 @@ func (b *Bot) loadUser(msg *telebot.Message) model.User {
 	_ = b.db.AddUser(u)
 	_ = storage.Save(b.db)
 	return u
+}
+
+func cmdPositions(b *Bot) interface{} {
+	return func(m *telebot.Message) {
+		u := b.loadUser(m)
+		ctx, cc := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cc()
+
+		var bf bytes.Buffer
+		for _, a := range u.Accounts {
+			cli := user.GetUserClient(a)
+			info, err := cli.Info(ctx)
+			if err != nil {
+				_, _ = b.bot.Send(m.Chat, "Error: "+err.Error())
+				continue
+			}
+
+			ps := b.filterPositions(info.Positions)
+			total := 0.0
+			for _, p := range ps {
+				if p.UnrealizedProfit >= 0 {
+					bf.WriteRune('🟩')
+				} else {
+					bf.WriteRune('🟥')
+				}
+				total += p.UnrealizedProfit
+				percent := 100 * p.Leverage * (p.MarkPrice - p.EntryPrice) / p.EntryPrice
+				if p.Side == model.SideShort {
+					percent = -percent
+				}
+				bf.WriteString(fmt.Sprintf(" %s: <b>%+.02f</b>$ (%+.02f%%) | Price: %s → %s | Margin: %.02f$ x%.0f ",
+					p.Symbol, p.UnrealizedProfit, percent,
+					formatPrice(p.EntryPrice), formatPrice(p.MarkPrice), p.Margin, p.Leverage),
+				)
+				if p.Side == model.SideShort {
+					bf.WriteString("🔻")
+				}
+				bf.WriteRune('\n')
+				if len(ps) <= 30 {
+					bf.WriteRune('\n')
+				}
+			}
+			bf.WriteString(fmt.Sprintf("%s's Unrealized PNL: <b>%.02f</b>$ (%d positions)\n\n", a.Name, total, len(ps)))
+		}
+		_, _ = b.bot.Send(m.Chat, bf.String(), telebot.ModeHTML)
+	}
 }
