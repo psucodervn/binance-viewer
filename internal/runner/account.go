@@ -2,12 +2,13 @@ package runner
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/rs/zerolog/log"
 )
+
+type OnAccountEvent func(ev *futures.WsUserDataEvent)
 
 type AccountRunner struct {
 	cli *futures.Client
@@ -18,7 +19,7 @@ func NewAccountRunner(apiKey string, secretKey string) *AccountRunner {
 	return &AccountRunner{cli: cli}
 }
 
-func (r *AccountRunner) OnUpdate() error {
+func (r *AccountRunner) OnUpdate(fn OnAccountEvent) error {
 	ctx := context.Background()
 	listenKey, err := r.cli.NewStartUserStreamService().Do(ctx)
 	if err != nil {
@@ -34,7 +35,9 @@ func (r *AccountRunner) OnUpdate() error {
 	go func() {
 		for {
 			doneC, stopC, err := futures.WsUserDataServe(listenKey, func(ev *futures.WsUserDataEvent) {
-				fmt.Printf("%+v\n", ev)
+				if fn != nil {
+					fn(ev)
+				}
 			}, func(err error) {
 				log.Err(err).Send()
 			})

@@ -7,6 +7,7 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"gopkg.in/tucnak/telebot.v2"
@@ -44,6 +45,13 @@ func formatPrice(p float64) string {
 	} else {
 		return fmt.Sprintf("%.4f", p)
 	}
+}
+
+func trimSymbol(symbol string) string {
+	if strings.HasSuffix(symbol, "USDT") {
+		symbol = symbol[:len(symbol)-4]
+	}
+	return symbol
 }
 
 type Position struct {
@@ -87,4 +95,16 @@ func (b *Bot) filterPositions(positions []*futures.AccountPosition) []Position {
 		return ps[i].UnrealizedProfit > ps[j].UnrealizedProfit
 	})
 	return ps
+}
+
+type teleUser struct {
+	ID int64
+}
+
+func (t teleUser) Recipient() string {
+	return strconv.Itoa(int(t.ID))
+}
+
+func newTeleUser(id int64) teleUser {
+	return teleUser{ID: id}
 }

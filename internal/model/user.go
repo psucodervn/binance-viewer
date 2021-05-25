@@ -8,10 +8,11 @@ type UserID = int64
 type AccountID = string
 
 type User struct {
-	ID         string                `json:"id"`
-	Name       string                `json:"name"`
-	TelegramID int64                 `json:"telegramId"`
-	Accounts   map[AccountID]Account `json:"accounts"`
+	ID          string                `json:"id"`
+	Name        string                `json:"name"`
+	TelegramID  int64                 `json:"telegramId"`
+	Accounts    map[AccountID]Account `json:"accounts"`
+	TradeNotify bool                  `json:"tradeNotify"`
 }
 
 func NewUser(name string, telegramID int64, accounts []Account) User {

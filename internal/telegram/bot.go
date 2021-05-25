@@ -5,7 +5,9 @@ import (
 	"context"
 	"copytrader/internal/binance"
 	"copytrader/internal/user"
+	"copytrader/internal/util"
 	"fmt"
+	"github.com/adshao/go-binance/v2/futures"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -111,6 +113,60 @@ func (b *Bot) loadUser(msg *telebot.Message) model.User {
 	_ = b.db.AddUser(u)
 	_ = storage.Save(b.db)
 	return u
+}
+
+func (b *Bot) OnEvent(u model.User, acc model.Account, ev *futures.WsUserDataEvent) {
+	if !u.TradeNotify {
+		return
+	}
+	if ev.Event != futures.UserDataEventTypeOrderTradeUpdate {
+		return
+	}
+	upd := ev.OrderTradeUpdate
+	log.Debug().Str("user", u.Name).Str("account", acc.Name).
+		Str("pnl", upd.RealizedPnL).
+		Str("symbol", upd.Symbol).
+		Str("fee", upd.Commission).
+		Str("price", upd.AveragePrice).
+		Str("type", string(upd.Type)).
+		Str("status", string(upd.Status)).
+		Str("side", string(upd.Side)).
+		Str("position_side", string(upd.PositionSide)).
+		Str("qty", upd.AccumulatedFilledQty).
+		Send()
+	log.Debug().Str("user", u.Name).Str("account", acc.Name).Interface("update", upd).Send()
+
+	if upd.Status == futures.OrderStatusTypeNew {
+		return
+	}
+
+	var bf bytes.Buffer
+	switch true {
+	case upd.PositionSide == futures.PositionSideTypeLong && upd.Side == futures.SideTypeBuy:
+		bf.WriteRune('🛒')
+		bf.WriteString(fmt.Sprintf(" [%s] Long <b>%s %s</b> at %.04f",
+			acc.Name, upd.AccumulatedFilledQty, trimSymbol(upd.Symbol), util.ParseFloat(upd.AveragePrice),
+		))
+	case upd.PositionSide == futures.PositionSideTypeShort && upd.Side == futures.SideTypeSell:
+		bf.WriteRune('🛒')
+		bf.WriteString(fmt.Sprintf(" [%s] Short <b>%s %s</b> at %.04f 🔻",
+			acc.Name, upd.AccumulatedFilledQty, trimSymbol(upd.Symbol), util.ParseFloat(upd.AveragePrice),
+		))
+	default:
+		pnl := util.ParseFloat(upd.RealizedPnL)
+		fee := util.ParseFloat(upd.Commission)
+		fee = 0
+		if pnl-fee >= 0 {
+			bf.WriteRune('💚')
+		} else {
+			bf.WriteRune('💔')
+		}
+		bf.WriteString(fmt.Sprintf(" [%s] <b>%s</b> <b>%+.04f$</b> at %.04f",
+			acc.Name, trimSymbol(upd.Symbol), pnl-fee, util.ParseFloat(upd.AveragePrice),
+		))
+	}
+
+	_, _ = b.bot.Send(newTeleUser(u.TelegramID), bf.String(), telebot.ModeHTML)
 }
 
 func cmdPositions(b *Bot) interface{} {
