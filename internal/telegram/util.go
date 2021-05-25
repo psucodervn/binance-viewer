@@ -74,7 +74,7 @@ func (b *Bot) filterPositions(positions []*futures.AccountPosition) []Position {
 				Symbol:           symbol,
 				Side:             side,
 				EntryPrice:       util.ParseFloat(p.EntryPrice),
-				MarkPrice:        b.cli.GetMarkPrice(p.Symbol),
+				MarkPrice:        b.markPriceFeeder.Get(p.Symbol),
 				Leverage:         util.ParseFloat(p.Leverage),
 				UnrealizedProfit: util.ParseFloat(p.UnrealizedProfit),
 				Margin:           util.ParseFloat(p.InitialMargin),

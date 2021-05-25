@@ -16,12 +16,12 @@ import (
 )
 
 type Bot struct {
-	bot *telebot.Bot
-	db  *model.Database
-	cli *binance.IdolFollower
+	bot             *telebot.Bot
+	db              *model.Database
+	markPriceFeeder binance.PriceFeeder
 }
 
-func NewBot(token string, db *model.Database, cli *binance.IdolFollower) *Bot {
+func NewBot(token string, db *model.Database, markPriceFeeder binance.PriceFeeder) *Bot {
 	bot, err := telebot.NewBot(telebot.Settings{
 		Token:  token,
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
@@ -29,7 +29,7 @@ func NewBot(token string, db *model.Database, cli *binance.IdolFollower) *Bot {
 	if err != nil {
 		log.Fatal().Err(err).Send()
 	}
-	return &Bot{bot: bot, db: db, cli: cli}
+	return &Bot{bot: bot, db: db, markPriceFeeder: markPriceFeeder}
 }
 
 func (b *Bot) Start() error {

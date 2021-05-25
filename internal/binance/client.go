@@ -3,6 +3,7 @@ package binance
 import (
 	"container/list"
 	"context"
+	"copytrader/internal/util"
 	"fmt"
 	"os"
 	"sync"
@@ -17,28 +18,25 @@ import (
 )
 
 type IdolFollower struct {
-	r           *rate.Limiter
-	idols       *list.List
-	mu          sync.RWMutex
-	positions   map[string][]model.Position
-	pnls        map[string]*atomic.Float64
-	markPrices  *PriceMap
-	tradePrices *PriceMap
+	r               *rate.Limiter
+	idols           *list.List
+	mu              sync.RWMutex
+	positions       map[string][]model.Position
+	pnls            map[string]*atomic.Float64
+	markPriceFeeder PriceFeeder
 }
 
-func NewIdolFollower() *IdolFollower {
+func NewIdolFollower(markPriceFeeder PriceFeeder) *IdolFollower {
 	return &IdolFollower{
-		r:           rate.NewLimiter(rate.Every(200*time.Millisecond), 1),
-		idols:       list.New(),
-		positions:   map[string][]model.Position{},
-		pnls:        map[string]*atomic.Float64{},
-		markPrices:  NewPriceMap(),
-		tradePrices: NewPriceMap(),
+		r:               rate.NewLimiter(rate.Every(200*time.Millisecond), 1),
+		idols:           list.New(),
+		positions:       map[string][]model.Position{},
+		pnls:            map[string]*atomic.Float64{},
+		markPriceFeeder: markPriceFeeder,
 	}
 }
 
 func (c *IdolFollower) Start(ctx context.Context) {
-	go c.startMarkPriceListener(ctx)
 	go c.startFollow(ctx)
 }
 
@@ -69,10 +67,6 @@ func (c *IdolFollower) Unfollow(ctx context.Context, idol model.Idol) error {
 		return nil
 	}
 	return nil
-}
-
-func (c *IdolFollower) GetMarkPrice(symbol string) float64 {
-	return c.markPrices.Get(symbol)
 }
 
 func (c *IdolFollower) startFollow(ctx context.Context) {
@@ -121,7 +115,11 @@ func (c *IdolFollower) process(ctx context.Context, idol model.Idol) error {
 		printDiffs(idol, diff)
 		for _, d := range diff {
 			if d.Status == model.StatusClosed {
-				p := c.markPrices.GetOrStore(d.Symbol, d.OldPosition.MarkPrice)
+				// p := c.markPrices.GetOrStore(d.Symbol, d.OldPosition.MarkPrice)
+				p := c.markPriceFeeder.Get(d.Symbol)
+				if util.IsZero(p) {
+					p = d.OldPosition.MarkPrice
+				}
 				pnl := (p - d.OldPosition.EntryPrice) * d.OldPosition.Amount
 				c.pnls[idol.UID].Add(pnl)
 			}

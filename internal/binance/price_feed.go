@@ -2,14 +2,24 @@ package binance
 
 import (
 	"context"
+	"copytrader/internal/model"
 	"encoding/json"
+	"github.com/rs/zerolog/log"
 	"strconv"
 	"time"
-
-	"github.com/rs/zerolog/log"
-
-	"copytrader/internal/model"
 )
+
+type OnNewPrice func(symbol string, price float64)
+
+type PriceFeeder interface {
+	Get(symbol string) float64
+	Subscribe(fn OnNewPrice)
+}
+
+type MarkPriceFeeder struct {
+	wsBaseURL string
+	prices    *PriceMap
+}
 
 const (
 	wsBaseURL = "wss://fstream.binance.com/ws/"
@@ -24,18 +34,25 @@ type rawMarkPriceUpdateEvent struct {
 	EstimatedSettlePrice string `json:"P"`
 }
 
-func (c *IdolFollower) startMarkPriceListener(ctx context.Context) {
+func NewMarkPriceFeeder() *MarkPriceFeeder {
+	return &MarkPriceFeeder{
+		wsBaseURL: wsBaseURL,
+		prices:    NewPriceMap(),
+	}
+}
+
+func (m *MarkPriceFeeder) Start(ctx context.Context) error {
 	cfg := &WsConfig{
-		Endpoint:  wsBaseURL + "!markPrice@arr",
+		Endpoint:  m.wsBaseURL + "!markPrice@arr",
 		KeepAlive: true,
 		Timeout:   time.Second * 10,
 	}
+
 	errHandler := func(err error) {
 		log.Err(err).Msg("ws failed")
 	}
 	eventHandler := func(ev model.MarkPriceUpdateEvent) {
-		// log.Debug().Str("symbol", ev.Symbol).Float64("price", ev.MarkPrice).Send()
-		c.markPrices.Set(ev.Symbol, ev.MarkPrice)
+		m.prices.Set(ev.Symbol, ev.MarkPrice)
 	}
 	wsHandler := func(rawMessage []byte) {
 		var rawEvents []rawMarkPriceUpdateEvent
@@ -56,5 +73,25 @@ func (c *IdolFollower) startMarkPriceListener(ctx context.Context) {
 			eventHandler(ev)
 		}
 	}
-	_, _, _ = wsServe(cfg, wsHandler, errHandler)
+
+	doneC, stopC, err := wsServe(cfg, wsHandler, errHandler)
+	go func() {
+		select {
+		case <-ctx.Done():
+			stopC <- struct{}{}
+			return
+		case <-doneC:
+			return
+		}
+	}()
+
+	return err
+}
+
+func (m *MarkPriceFeeder) Get(symbol string) float64 {
+	return m.prices.Get(symbol)
+}
+
+func (m *MarkPriceFeeder) Subscribe(fn OnNewPrice) {
+	panic("implement me")
 }

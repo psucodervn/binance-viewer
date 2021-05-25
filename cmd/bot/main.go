@@ -43,19 +43,11 @@ func run(cmd *cobra.Command, args []string) {
 
 	ctx := context.Background()
 	ctx, cc := signal.NotifyContext(ctx, syscall.SIGKILL, syscall.SIGINT)
-	cli := binance.NewIdolFollower()
-	// _ = cli.Follow(ctx, model.IdolFmzcomAutoTrade)
-	// _ = cli.Follow(ctx, model.IdolCryptoNifeCatch)
-	// _ = cli.Follow(ctx, model.IdolHuyLD)
-	// _ = cli.Follow(ctx, model.IdolHungLM)
-	// _ = cli.Follow(ctx, model.IdolPDYK)
-	// _ = cli.Follow(ctx, model.IdolHalfTalkVery)
-	// _ = cli.Follow(ctx, model.IdolCountyYearBy)
-	// _ = cli.Follow(ctx, model.IdolDegenerator)
-	// _ = cli.Follow(ctx, model.IdolGrugLikesRock)
-	cli.Start(ctx)
 
-	bot := telegram.NewBot(cfg.BotToken, db, cli)
+	feeder := binance.NewMarkPriceFeeder()
+	_ = feeder.Start(ctx)
+
+	bot := telegram.NewBot(cfg.BotToken, db, feeder)
 	go func() {
 		if err := bot.Start(); err != nil {
 			log.Fatal().Err(err).Send()
@@ -65,3 +57,15 @@ func run(cmd *cobra.Command, args []string) {
 	<-ctx.Done()
 	cc()
 }
+
+// cli := binance.NewIdolFollower()
+// _ = cli.Follow(ctx, model.IdolFmzcomAutoTrade)
+// _ = cli.Follow(ctx, model.IdolCryptoNifeCatch)
+// _ = cli.Follow(ctx, model.IdolHuyLD)
+// _ = cli.Follow(ctx, model.IdolHungLM)
+// _ = cli.Follow(ctx, model.IdolPDYK)
+// _ = cli.Follow(ctx, model.IdolHalfTalkVery)
+// _ = cli.Follow(ctx, model.IdolCountyYearBy)
+// _ = cli.Follow(ctx, model.IdolDegenerator)
+// _ = cli.Follow(ctx, model.IdolGrugLikesRock)
+// cli.Start(ctx)
